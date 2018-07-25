@@ -1,8 +1,6 @@
 import os;
 import csv;
 
-os.chdir('../formed_data/tts_1/continous_sample/');
-
 filename = ['1d0733906f57440ecade6f8d3f091630de8c24ec.csv', 
     '5a582fd2839fc31dbc553389cf8e65b8b845aa7c.csv', 
     '6d195551c1ef0ca9bf855903cdfd9dd6b71a6ff5.csv', 
@@ -31,11 +29,21 @@ filename = ['1d0733906f57440ecade6f8d3f091630de8c24ec.csv',
     
 def load_data(FileIndex):
     '''
-    Read CSV file and return all entries in a string matrix
+    Read CSV file and return all entries in a matrix
+    The set parameter indicate which set of data should be loaded:
+    set = 'test_1': test data in the first train-test-set
+    set = 'test_2': test data in the second train-test-set
+    set = 'train_1': train data in the first train-test-set
+    set = 'train_1': train data in the second train-test-set
+    else: continuous sample (default)
     '''
     if ((FileIndex < 0) or (FileIndex > 24)):
         raise ValueError('Invalid file index.');
+        
     result = [];
+    
+    os.chdir('../formed_data/tts_1/continuous_sample/');
+
     with open(filename[FileIndex], 'r', newline = '') as csvfile:
         reader = csv.reader(csvfile, delimiter = ',');
         first = True;
@@ -48,9 +56,11 @@ def load_data(FileIndex):
                 continue;
             row[1] = int(row[1]);
             row[2] = int(row[2]);
-            row[3] = int(row[3]);
+            row[3] = int(row[3]); 
             row[4] = int(row[4]);
-            result.append(row);
+            if not (row in result):
+                result.append(row);
+    os.chdir(os.path.dirname(__file__))
     return result;
     
 def generate_features(data, k, HISTORY = None):
@@ -121,3 +131,45 @@ def generate_labels(data, k, HISTORY = None):
             else:
                 y.append(data[i][1]);
     return y;
+    
+def load_tts(FileIndex, k):
+    data = load_data(FileIndex);
+    X = generate_features(data, k);
+    y = generate_labels(data, k);
+    datasize = len(X);
+
+    test_entries = [];
+    
+    os.chdir('../formed_data/tts_1/test_1/');
+    
+    with open('test_' + filename[FileIndex], 'r', newline = '') as csvfile:
+        reader = csv.reader(csvfile, delimiter = ',');
+        first = True;
+        for row in reader:
+            '''
+            Ignore first row
+            '''
+            if first:
+                first = False;
+                continue;
+            test_entries.append(row[0][:10]);
+    
+    X_train = [];
+    X_test = {};
+    y_train = [];
+    y_test = {};
+    
+    for i in range (datasize):
+        date = data[i][0][:10];
+        if date in test_entries:
+            if date not in X_test.keys():
+                X_test[date] = [];
+                y_test[date] = [];
+            X_test[date].append(X[i]);
+            y_test[date].append(y[i]);
+        else:
+            X_train.append(X[i]);
+            y_train.append(y[i]);
+    
+    os.chdir(os.path.dirname(__file__));
+    return X_train, X_test, y_train, y_test;
