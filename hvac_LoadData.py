@@ -33,10 +33,10 @@ def load_data(FileIndex):
     '''
     Read CSV file and return all entries in a string matrix
     '''
-    if ((FileIndex < 1) or (FileIndex > 25)):
+    if ((FileIndex < 0) or (FileIndex > 24)):
         raise ValueError('Invalid file index.');
     result = [];
-    with open(filename[FileIndex - 1], 'r', newline = '') as csvfile:
+    with open(filename[FileIndex], 'r', newline = '') as csvfile:
         reader = csv.reader(csvfile, delimiter = ',');
         first = True;
         for row in reader:
@@ -112,12 +112,12 @@ def generate_labels(data, k, HISTORY = None):
                 elif (data[n][3] != 0):
                     if ((data[n][2] != data[n - 1][2]) or (data[n][4] != data[n - 1][4])):
                         datacontinuous = False;
-            if datacontinuous:
-                y.append(data[i][2]);
-            else:
-                if HISTORY == None:
-                    break;
-                else:
-                    y.append(data[i][2]);
             n -= 1;
+        if datacontinuous:
+            y.append(data[i][1]);
+        else:
+            if HISTORY == None:
+                continue;
+            else:
+                y.append(data[i][1]);
     return y;
